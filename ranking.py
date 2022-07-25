@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import Iterable, Optional, Any
 
 
-FREE_ELO_GAIN = 0.25
+FREE_ELO_GAIN = 0.5
 ELO_GAIN_COEF = 10
 INITIAL_ELO = 1000
 
@@ -73,7 +73,7 @@ class RankingSystem:
         return statistics.mean(self.elo[player] for player in team)
 
     def player_team_weight(self, player: str, team: tuple[str]) -> float:
-        return 1
+        return 1 / len(team)
 
     def score_sigmoid(self, x: float) -> float:
         return 1 / (1 + 10 ** (x / 500))
@@ -91,7 +91,7 @@ class RankingSystem:
             for player in match.teams[t]:
                 pred = self.pred_score(match.teams[t], match.teams[1-t])
                 true = self.true_score(match.results[t], match.results[1-t])
-                delta = self.elo_gain_coef * max(match.points) * (true - pred)
+                delta = self.elo_gain_coef * sum(match.points) * (true - pred)
                 player_delta = delta * self.player_team_weight(player, match.teams[t])
                 deltas[player] = self.free_elo_gain + player_delta
         return deltas
